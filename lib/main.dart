@@ -11,6 +11,7 @@ import 'package:hand_signature/signature.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:imageeditor/image_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:screenshot/screenshot.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -256,7 +257,7 @@ class _MyHomePageState extends State<MyHomePage> {
   ValueNotifier<String?> svg = ValueNotifier<String?>(null);
 
   ValueNotifier<ByteData?> rawImage = ValueNotifier<ByteData?>(null);
-
+  ScreenshotController screenshotController = ScreenshotController();
   ValueNotifier<ByteData?> rawImageFit = ValueNotifier<ByteData?>(null);
   bool expandCrop = false;
   bool expandRotate = false;
@@ -275,24 +276,26 @@ class _MyHomePageState extends State<MyHomePage> {
                   context,
                   listen: false);
 
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    child: Image.memory(base64Decode(
-                        controller.images[controller.selectedIndex])),
-                  ),
-                  Container(
-                    constraints: const BoxConstraints.expand(),
-                    // color: Colors.white,
-                    child: HandSignature(
-                      control: control,
-                      type: SignatureDrawType.shape,
-                      color: drawColorSelected,
-                    ),
-                  ),
-                ],
-              );
+              return Screenshot(
+                  controller: screenshotController,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        child: Image.memory(base64Decode(
+                            controller.images[controller.selectedIndex])),
+                      ),
+                      Container(
+                        constraints: const BoxConstraints.expand(),
+                        // color: Colors.white,
+                        child: HandSignature(
+                          control: control,
+                          type: SignatureDrawType.shape,
+                          color: drawColorSelected,
+                        ),
+                      ),
+                    ],
+                  ));
             }
             // },
             ),
@@ -361,6 +364,37 @@ class _MyHomePageState extends State<MyHomePage> {
             IconButton(
                 onPressed: () async {
                   if (widget.openDraw) {
+                    await screenshotController.capture().then((value) async {
+                      Uint8List uint8List = value!.buffer.asUint8List();
+                      final String base64String1 = base64Encode(uint8List);
+                      print(base64String1);
+                      final control =
+                          Provider.of<ImageCollectionScreenProvider>(context,
+                              listen: false);
+                      // control.images[control.selectedIndex] = base64String;
+                      control.saveImage(base64String1);
+                      // Navigator.pop(context);
+                      // await showDialog(
+                      //     context: context,
+                      //     builder: (context) {
+                      //       return AlertDialog(
+                      //         content: Container(
+                      //           height: 200,
+                      //           width: 400,
+                      //           color: Colors.pink,
+                      //           child:
+                      //               Image.memory(base64Decode(base64String1)),
+                      //         ),
+                      //         actions: [
+                      //           ElevatedButton(
+                      //               onPressed: () {
+                      //                 Navigator.pop(context);
+                      //               },
+                      //               child: Text("done"))
+                      //         ],
+                      //       );
+                      //     });
+                    });
                     // svg.value = control.toSvg(
                     //   color: Colors.blueGrey,
                     //   type: SignatureDrawType.shape,
